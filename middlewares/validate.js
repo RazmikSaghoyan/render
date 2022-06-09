@@ -5,7 +5,7 @@ module.exports = () => {
   return async (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json(errors.mapped());
+      return res.status(404).json(errors.mapped());
     }
 
     next();

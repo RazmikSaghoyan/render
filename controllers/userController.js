@@ -3,15 +3,10 @@ const { User, Announcement} = require('../models');
 module.exports = {
   /**
    * Get single user
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async get(req, res, next) {
-    await User.findOne({
-      where: { id: req.params.id },
+  get(req, res, next) {
+    return User.findOne({
+      where: { id: parseInt(req.params.id) },
       include: {
         model: Announcement,
         as: 'announcements'
@@ -22,101 +17,75 @@ module.exports = {
           return res.json(user);
         }
 
-        return res.status(400).json({ message: 'User not found' });
+        return res.status(404).json({ message: 'User not found' });
       })
-      .catch(e => next(e));
+      .catch(next);
   },
 
   /**
    * Get all users
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async getAll(req, res, next) {
-    await User.findAll({
+  getAll(req, res, next) {
+    return User.findAll({
       include: {
         model: Announcement,
         as: 'announcements',
       },
     })
-      .then(users => {
-        return res.json(users);
-      })
-      .catch(e => next(e));
+      .then(users => res.json(users))
+      .catch(next);
   },
 
   /**
    * Create a new user instance
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async store(req, res, next) {
+  store(req, res, next) {
     const { firstName, lastName, email, password } = req.body;
 
-    return await User.create({
+    return User.create({
       firstName,
       lastName,
       email,
       password
     })
-      .then(user => {
-        return res.json(user);
-      })
-      .catch(e => next(e));
+      .then(user => res.json(user))
+      .catch(next);
   },
 
   /**
    * Update single user data
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async update(req, res, next) {
+  update(req, res, next) {
     const { firstName, lastName, email, password } = req.body;
 
-    return await User.update({
+    return User.update({
       firstName, lastName, email, password
-    }, { where: { id: req.params.id } })
+    }, { where: { id: parseInt(req.params.id) } })
       .then(user => {
-        if (user) {
+        if (!!user[0]) {
           return res.send({ message: 'Updated successfully' });
         }
 
         return res.send({ message: 'Can\'t update user' });
       })
-      .then(user => {
-        return res.json(user);
-      })
-      .catch(e => next(e));
+      .then(user => res.json(user))
+      .catch(next);
   },
 
   /**
    * Deleting user
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async delete(req, res, next) {
-    await User.destroy({
-      where: { id: req.params.id },
+  delete(req, res, next) {
+    return User.destroy({
+      where: { id: parseInt(req.params.id) },
     })
       .then(user => {
         if (user) {
           return res.json(user);
         }
 
-        return res.status(400).json({ message: 'User not found' });
+        return res.status(404).json({ message: 'User not found' });
       })
-      .catch(e => next(e));
+      .catch(next);
   }
 };

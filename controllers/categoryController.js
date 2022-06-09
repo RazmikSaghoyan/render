@@ -3,118 +3,111 @@ const { Category, Announcement} = require('../models');
 module.exports = {
   /**
    * Get single category
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async get(req, res, next) {
-    await Category.findOne({
-      where: { id: req.params.id },
-      include: {
-        model: Announcement,
-        as: 'announcements'
-      }
+  get(req, res, next) {
+    return Category.findOne({
+      where: { id: parseInt(req.params.id) },
+      include: [
+        {
+          model: Announcement,
+          as: 'announcements'
+        },
+        {
+          model: Category,
+          as: 'children'
+        }
+      ]
     })
       .then(category => {
         if (category) {
           return res.json(category);
         }
 
-        return res.status(400).json({ message: 'Category not found' });
+        return res.status(404).json({ message: 'Category not found' });
       })
-      .catch(e => next(e));
+      .catch(next);
   },
 
   /**
    * Get all category
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async getAll(req, res, next) {
-    await Category.findAll({
-      include: {
-        model: Announcement,
-        as: 'announcements',
-      },
+  getAll(req, res, next) {
+    return Category.findAll({
+      raw: true
     })
-      .then(category => {
-        return res.json(category);
-      })
-      .catch(e => next(e));
+      .then(categories => res.json(createDataTree(categories)))
+      .catch(next);
   },
 
   /**
    * Create a new category instance
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async store(req, res, next) {
+  store(req, res, next) {
     const { title, parentId = null } = req.body;
 
-    return await Category.create({
+    return Category.create({
       title,
       parentId
     })
-      .then(category => {
-        return res.json(category);
-      })
-      .catch(e => next(e));
+      .then(category => res.json(category))
+      .catch(next);
   },
 
   /**
    * Update single category data
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async update(req, res, next) {
+  update(req, res, next) {
     const { title, parentId = null } = req.body;
 
-    return await Category.update({
+    return Category.update({
       title, parentId
-    }, { where: { id: req.params.id } })
+    }, { where: { id: parseInt(req.params.id) } })
       .then(category => {
-        if (category) {
+        if (!!category[0]) {
           return res.send({ message: 'Updated successfully' });
         }
 
         return res.send({ message: 'Can\'t update category' });
       })
-      .then(category => {
-        return res.json(category);
-      })
-      .catch(e => next(e));
+      .then(category => res.json(category))
+      .catch(next);
   },
 
   /**
    * Deleting category
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async delete(req, res, next) {
-    await Category.destroy({
-      where: { id: req.params.id },
+  delete(req, res, next) {
+    return Category.destroy({
+      where: { id: parseInt(req.params.id) },
     })
       .then(category => {
         if (category) {
           return res.json(category);
         }
 
-        return res.status(400).json({ message: 'Category not found' });
+        return res.status(404).json({ message: 'Category not found' });
       })
-      .catch(e => next(e));
+      .catch(next);
   }
 };
+
+/**
+ * Data tree creation functionality
+ */
+function createDataTree(dataset) {
+  const hashTable = Object.create(null);
+
+  dataset.forEach(data => hashTable[data.id] = {...data, children: []});
+
+  const dataTree = [];
+
+  dataset.forEach(data => {
+    if (data.parentId) {
+      hashTable[data.parentId].children.push(hashTable[data.id])
+    } else {
+      dataTree.push(hashTable[data.id])
+    }
+  });
+
+  return dataTree;
+}

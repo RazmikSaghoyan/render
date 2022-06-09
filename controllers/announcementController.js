@@ -3,15 +3,10 @@ const { Announcement, Category, User} = require('../models');
 module.exports = {
   /**
    * Get single announcement
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async get(req, res, next) {
-    await Announcement.findOne({
-      where: { id: req.params.id },
+  get(req, res, next) {
+    return Announcement.findOne({
+      where: { id: parseInt(req.params.id) },
       include: [
         {
           model: Category,
@@ -28,21 +23,16 @@ module.exports = {
           return res.json(announcement);
         }
 
-        return res.status(400).json({ message: 'Announcement not found' });
+        return res.status(404).json({ message: 'Announcement not found' });
       })
-      .catch(e => next(e));
+      .catch(next);
   },
 
   /**
    * Get all announcement
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async getAll(req, res, next) {
-    await Announcement.findAll({
+  getAll(req, res, next) {
+    return Announcement.findAll({
       include: [
         {
           model: Category,
@@ -54,21 +44,14 @@ module.exports = {
         },
       ],
     })
-      .then(announcement => {
-        return res.json(announcement);
-      })
-      .catch(e => next(e));
+      .then(announcement => res.json(announcement))
+      .catch(next);
   },
 
   /**
    * Create a new announcement instance
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async store(req, res, next) {
+  store(req, res, next) {
     const {
       title,
       description = null,
@@ -77,28 +60,21 @@ module.exports = {
       userId
     } = req.body;
 
-    return await Announcement.create({
+    return Announcement.create({
       title,
       description,
       image,
       categoryId,
       userId
     })
-      .then(announcement => {
-        return res.json(announcement);
-      })
-      .catch(e => next(e));
+      .then(announcement => res.json(announcement))
+      .catch(next);
   },
 
   /**
    * Update single announcement data
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async update(req, res, next) {
+  update(req, res, next) {
     const {
       title,
       description = null,
@@ -107,45 +83,38 @@ module.exports = {
       userId
     } = req.body;
 
-    return await Announcement.update({
+    return Announcement.update({
       title,
       description,
       image,
       categoryId,
       userId
-    }, { where: { id: req.params.id } })
+    }, { where: { id: parseInt(req.params.id) } })
       .then(announcement => {
-        if (announcement) {
+        if (!!announcement[0]) {
           return res.send({ message: 'Updated successfully' });
         }
 
         return res.send({ message: 'Can\'t update announcement' });
       })
-      .then(announcement => {
-        return res.json(announcement);
-      })
-      .catch(e => next(e));
+      .then(announcement => res.json(announcement))
+      .catch(next);
   },
 
   /**
    * Deleting announcement
-   *
-   * @param req
-   * @param res
-   * @param next
-   * @returns {Promise<*>}
    */
-  async delete(req, res, next) {
-    await Announcement.destroy({
-      where: { id: req.params.id },
+  delete(req, res, next) {
+    return Announcement.destroy({
+      where: { id: parseInt(req.params.id) },
     })
       .then(announcement => {
         if (announcement) {
           return res.json(announcement);
         }
 
-        return res.status(400).json({ message: 'Announcement not found' });
+        return res.status(404).json({ message: 'Announcement not found' });
       })
-      .catch(e => next(e));
+      .catch(next);
   }
 };
